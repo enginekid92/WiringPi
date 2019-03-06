@@ -40,7 +40,6 @@ CC	= gcc
 INCLUDE	= -I.
 DEFS	= -D_GNU_SOURCE
 CFLAGS	= $(DEBUG) $(DEFS) -Wformat=2 -Wall -Wextra -Winline $(INCLUDE) -pipe -fPIC
-#CFLAGS	= $(DEBUG) $(DEFS) -Wformat=2 -Wall -Wextra -Wconversion -Winline $(INCLUDE) -pipe -fPIC
 
 LIBS    = -lm -lpthread -lrt -lcrypt
 
@@ -69,9 +68,13 @@ OBJ	=	$(SRC:.c=.o)
 
 all:		$(DYNAMIC)
 
-.PHONY:	static
-static:	
-		$Q cat noMoreStatic
+static:		$(STATIC)
+
+$(STATIC):	$(OBJ)
+	$Q echo "[Link (Static)]"
+	$Q ar rcs $(STATIC) $(OBJ)
+	$Q ranlib $(STATIC)
+#	@size   $(STATIC)
 
 $(DYNAMIC):	$(OBJ)
 	$Q echo "[Link (Dynamic)]"
@@ -103,6 +106,15 @@ install:	$(DYNAMIC)
 	$Q install -m 0755 libwiringPi.so.$(VERSION)			$(DESTDIR)$(PREFIX)/lib/libwiringPi.so.$(VERSION)
 	$Q ln -sf $(DESTDIR)$(PREFIX)/lib/libwiringPi.so.$(VERSION)	$(DESTDIR)/lib/libwiringPi.so
 	$Q $(LDCONFIG)
+
+.PHONY:	install-static
+install-static:	$(STATIC)
+	$Q echo "[Install Headers]"
+	$Q install -m 0755 -d						$(DESTDIR)$(PREFIX)/include
+	$Q install -m 0644 $(HEADERS)					$(DESTDIR)$(PREFIX)/include
+	$Q echo "[Install Static Lib]"
+	$Q install -m 0755 -d						$(DESTDIR)$(PREFIX)/lib
+	$Q install -m 0755 libwiringPi.a					$(DESTDIR)$(PREFIX)/lib
 
 .PHONY:	install-deb
 install-deb:	$(DYNAMIC)
